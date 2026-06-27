@@ -1,0 +1,71 @@
+name: Mise à jour des expositions photo
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"   # Tous les lundis à 06:00
+  workflow_dispatch:       # Permet de lancer manuellement si tu veux tester
+
+jobs:
+  update-expos:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v3
+
+      - name: Installer Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Installer les dépendances
+        run: pip install requests beautifulsoup4
+
+      - name: Mettre à jour expos.json
+        run: |
+          python <<EOF
+          import json, requests
+          from bs4 import BeautifulSoup
+
+          # Sources à scruter (tu peux en ajouter autant que tu veux)
+          sources = [
+              "https://www.festivalphoto-lagacilly.com",
+              "https://www.photofolies.fr",
+              "https://www.fracpaysdelaloire.com",
+              "https://www.lelieuunique.com"
+          ]
+
+          events = []
+
+          for url in sources:
+              try:
+                  r = requests.get(url, timeout=10)
+                  soup = BeautifulSoup(r.text, "html.parser")
+
+                  # Extraction simple (on affinera ensuite)
+                  title = soup.title.string if soup.title else "Exposition"
+                  description = "Informations disponibles sur le site officiel."
+                  lieu = url.split("//")[1].split("/")[0]
+
+                  events.append({
+                      "titre": title,
+                      "lieu": lieu,
+                      "debut": "2026-01-01",
+                      "fin": "2026-12-31",
+                      "description": description,
+                      "lien": url
+                  })
+              except Exception as e:
+                  print("Erreur :", e)
+
+          with open("expos.json", "w") as f:
+              json.dump(events, f, indent=2, ensure_ascii=False)
+          EOF
+
+      - name: Commit & Push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add expos.json
+          git commit -m "Mise à jour automatique des expositions"
+          git push
