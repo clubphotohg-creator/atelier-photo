@@ -29,13 +29,12 @@
 
 <script>
     async function chargerExpos() {
-        // Chemin ABSOLU pour GitHub Pages
-        const response = await fetch("/atelier-photo/expos.json");
+        // Chemin RELATIF (fonctionne sur GitHub Pages)
+        const response = await fetch("expos.json");
         const expos = await response.json();
 
         const container = document.getElementById("agenda");
 
-        // Regroupement par mois
         const parMois = {};
 
         expos.forEach(expo => {
@@ -44,7 +43,6 @@
             parMois[mois].push(expo);
         });
 
-        // Affichage
         for (const mois in parMois) {
             const section = document.createElement("section");
             section.innerHTML = `<h2>${mois.charAt(0).toUpperCase() + mois.slice(1)}</h2>`;
@@ -57,3 +55,16 @@
                         📅 ${expo.debut} → ${expo.fin}<br>
                         ✏️ ${expo.description}<br>
                         🔗 <a href="${expo.lien}" target="_blank">Site officiel</a>
+                    </p>
+                `;
+            });
+
+            container.appendChild(section);
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", chargerExpos);
+</script>
+
+</body>
+</html>
