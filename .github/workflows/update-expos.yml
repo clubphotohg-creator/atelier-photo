@@ -1,9 +1,9 @@
-name: Mise à jour des expositions photo
+name: Mise à jour automatique des expositions photo
 
 on:
+  workflow_dispatch:      # Permet de lancer manuellement MAINTENANT
   schedule:
     - cron: "0 6 * * 1"   # Tous les lundis à 06:00
-  workflow_dispatch:       # Permet de lancer manuellement si tu veux tester
 
 jobs:
   update-expos:
@@ -19,46 +19,57 @@ jobs:
           python-version: "3.10"
 
       - name: Installer les dépendances
-        run: pip install requests beautifulsoup4
+        run: pip install requests beautifulsoup4 lxml
 
-      - name: Mettre à jour expos.json
+      - name: Scraper les expositions photo
         run: |
           python <<EOF
           import json, requests
           from bs4 import BeautifulSoup
 
-          # Sources à scruter (tu peux en ajouter autant que tu veux)
-          sources = [
-              "https://www.festivalphoto-lagacilly.com",
-              "https://www.photofolies.fr",
-              "https://www.fracpaysdelaloire.com",
-              "https://www.lelieuunique.com"
+          SOURCES = [
+              "https://www.hab-galerie.fr",
+              "https://www.lelieuunique.com",
+              "https://archives.loire-atlantique.fr",
+              "https://www.museedartsdenantes.fr",
+              "https://expotheque.fr",
+              "https://www.nantesmetropole.fr",
+              "https://www.voyageanantes.fr"
           ]
 
           events = []
 
-          for url in sources:
+          def add_event(title, place, start, end, desc, link):
+              events.append({
+                  "titre": title,
+                  "lieu": place,
+                  "debut": start,
+                  "fin": end,
+                  "description": desc,
+                  "lien": link
+              })
+
+          for url in SOURCES:
               try:
                   r = requests.get(url, timeout=10)
-                  soup = BeautifulSoup(r.text, "html.parser")
+                  soup = BeautifulSoup(r.text, "lxml")
 
-                  # Extraction simple (on affinera ensuite)
-                  title = soup.title.string if soup.title else "Exposition"
-                  description = "Informations disponibles sur le site officiel."
-                  lieu = url.split("//")[1].split("/")[0]
-
-                  events.append({
-                      "titre": title,
-                      "lieu": lieu,
-                      "debut": "2026-01-01",
-                      "fin": "2026-12-31",
-                      "description": description,
-                      "lien": url
-                  })
+                  # Extraction simple : on récupère les titres contenant "photo"
+                  for tag in soup.find_all(["h1","h2","h3","p","a"]):
+                      txt = tag.get_text(strip=True).lower()
+                      if "photo" in txt or "photographie" in txt:
+                          add_event(
+                              title=tag.get_text(strip=True),
+                              place=url.split("//")[1].split("/")[0],
+                              start="2026-01-01",
+                              end="2026-12-31",
+                              desc="Exposition détectée automatiquement.",
+                              link=url
+                          )
               except Exception as e:
-                  print("Erreur :", e)
+                  print("Erreur:", e)
 
-          with open("expos.json", "w") as f:
+          with open("expos.json", "w", encoding="utf-8") as f:
               json.dump(events, f, indent=2, ensure_ascii=False)
           EOF
 
