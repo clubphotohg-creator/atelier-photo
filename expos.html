@@ -29,6 +29,7 @@
 
 <script>
     async function chargerExpos() {
+        console.log("SCRIPT OK");
         // Chemin RELATIF (fonctionne sur GitHub Pages)
         const response = await fetch("expos.json");
         const expos = await response.json();
