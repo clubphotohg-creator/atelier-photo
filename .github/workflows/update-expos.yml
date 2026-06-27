@@ -1,7 +1,7 @@
 name: Mise à jour automatique des expositions photo
 
 on:
-  workflow_dispatch:      # Permet de lancer manuellement MAINTENANT
+  workflow_dispatch:      # Permet de lancer manuellement
   schedule:
     - cron: "0 6 * * 1"   # Tous les lundis à 06:00
 
@@ -69,6 +69,8 @@ jobs:
               except Exception as e:
                   print("Erreur:", e)
 
+          print("Nombre d'expos trouvées :", len(events))
+
           with open("expos.json", "w", encoding="utf-8") as f:
               json.dump(events, f, indent=2, ensure_ascii=False)
           EOF
@@ -80,4 +82,3 @@ jobs:
           git add expos.json || true
           git commit -m "Mise à jour automatique des expositions" || true
           git push || true
-
