@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Agenda des Expositions Photo</title>
+    <link rel="stylesheet" href="style.css">
+    <script>
+        async function chargerExpos() {
+            const response = await fetch("expos.json");
+            const expos = await response.json();
+
+            const container = document.getElementById("agenda");
+
+            // Regroupement par mois
+            const parMois = {};
+
+            expos.forEach(expo => {
+                const mois = new Date(expo.debut).toLocaleString("fr-FR", { month: "long", year: "numeric" });
+                if (!parMois[mois]) parMois[mois] = [];
+                parMois[mois].push(expo);
+            });
+
+            // Affichage
+            for (const mois in parMois) {
+                const section = document.createElement("section");
+                section.innerHTML = `<h2>${mois.charAt(0).toUpperCase() + mois.slice(1)}</h2>`;
+
+                parMois[mois].forEach(expo => {
+                    section.innerHTML += `
+                        <p>
+                            <strong>${expo.titre}</strong><br>
+                            📍 ${expo.lieu}<br>
+                            📅 ${expo.debut} → ${expo.fin}<br>
+                            ✏️ ${expo.description}<br>
+                            🔗 <a href="${expo.lien}" target="_blank">Site officiel</a>
+                        </p>
+                    `;
+                });
+
+                container.appendChild(section);
+            }
+        }
+
+        window.onload = chargerExpos;
+    </script>
+</head>
+
+<body>
+<nav>
+    <ul>
+        <li><a href="index.html">Accueil</a></li>
+        <li><a href="expos.html">Expos</a></li>
+        <li><a href="galerie.html">Galerie</a></li>
+        <li><a href="atelier.html">Atelier</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li><a href="login.html">Espace membres</a></li>
+    </ul>
+</nav>
+
+<div class="container">
+    <h1>Agenda des Expositions Photo</h1>
+    <div id="agenda"></div>
+</div>
+
+<footer>
+    Atelier Photo — Agenda des Expos
+</footer>
+</body>
+</html>
